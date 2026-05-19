@@ -10,6 +10,7 @@ import com.example.converter.service.ConversionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class InboxEventProcessor {
     private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelayString = "${inbox.scheduler.fixed-delay-ms}")
+    @SchedulerLock(name = "processPendingEvents", lockAtLeastFor = "4s", lockAtMostFor = "30s")
     public void processPendingEvents() {
         List<InboxEvent> pending = inboxEventRepository.findAllByStatus(InboxEventStatus.PENDING);
         if (pending.isEmpty()) {

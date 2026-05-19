@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/v1__create_inbox_events.yaml
+  - include:
+      file: db/changelog/v2__create_shedlock.yaml
