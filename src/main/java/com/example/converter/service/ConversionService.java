@@ -44,7 +44,8 @@ public class ConversionService {
                 request.bucket(),
                 objectKey,
                 resultBucket,
-                resultKey
+                resultKey,
+                null
         );
     }
 

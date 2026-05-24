@@ -39,13 +39,23 @@ public class InboxEventProcessor {
     }
 
     private void processEvent(InboxEvent event) {
+        ConversionRequestEvent request;
         try {
-            ConversionRequestEvent request = objectMapper.readValue(event.getPayload(), ConversionRequestEvent.class);
+            request = objectMapper.readValue(event.getPayload(), ConversionRequestEvent.class);
+        } catch (Exception e) {
+            log.error("Failed to deserialize inbox event: eventId={}", event.getEventId(), e);
+            markFailed(event);
+            sendErrorResult(event.getEventId(), null, null, e.getMessage());
+            return;
+        }
+
+        try {
             ConversionResultEvent result = conversionService.convert(request);
             kafkaProducer.sendResult(result);
         } catch (Exception e) {
             log.error("Failed to process inbox event: eventId={}", event.getEventId(), e);
             markFailed(event);
+            sendErrorResult(request.eventId(), request.bucket(), request.objectKey(), e.getMessage());
             return;
         }
 
@@ -53,6 +63,15 @@ public class InboxEventProcessor {
             markProcessed(event);
         } catch (Exception e) {
             log.error("Failed to mark event as processed, will retry: eventId={}", event.getEventId(), e);
+        }
+    }
+
+    private void sendErrorResult(String eventId, String sourceBucket, String sourceKey, String errorMessage) {
+        try {
+            kafkaProducer.sendResult(new ConversionResultEvent(
+                    eventId, sourceBucket, sourceKey, null, null, errorMessage));
+        } catch (Exception e) {
+            log.error("Failed to send error result event: eventId={}", eventId, e);
         }
     }
 

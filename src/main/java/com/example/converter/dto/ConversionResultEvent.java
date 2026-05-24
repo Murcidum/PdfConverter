@@ -5,5 +5,6 @@ public record ConversionResultEvent(
         String sourceBucket,
         String sourceKey,
         String resultBucket,
-        String resultKey
+        String resultKey,
+        String errorMessage
 ) {}
